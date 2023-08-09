@@ -17,24 +17,32 @@ unit DemoCounterForm;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
-  Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls,
-  Redux;
+  Winapi.Windows,
+  Winapi.Messages,
+  System.SysUtils,
+  System.Variants,
+  System.Classes,
+  Vcl.Graphics,
+  Vcl.Controls,
+  Vcl.Forms,
+  Vcl.Dialogs,
+  Vcl.StdCtrls,
+  Redux.Callback,
+  Redux.Contract.Store,
+  Redux.Store;
 
 type
-  TEnumAction= (INIT, INCREMENT, DECREMENT);
+  TEnumAction = (INIT, INCREMENT, DECREMENT);
 
   TFormDemoCounter = class(TForm)
     ButtonInc: TButton;
     ButtonDec: TButton;
     LabelCounter: TLabel;
-
     procedure ButtonIncClick(Sender: TObject);
     procedure ButtonDecClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
-
   private
-    FStore : IStore<Integer, TEnumAction>;
+    FStore: IStore<Integer, TEnumAction>;
   end;
 
 var
@@ -56,27 +64,28 @@ end;
 
 procedure TFormDemoCounter.FormShow(Sender: TObject);
 var
-  FReducer : TReducer<Integer,TEnumAction>;
+  LReducer: TReducerCallback<Integer, TEnumAction>;
 begin
-  FReducer :=
-    function(State: Integer; Action: TEnumAction): Integer
+  LReducer := function(const AState: Integer; const AAction: TEnumAction): Integer
     begin
-      case Action of
+      case AAction of
         INCREMENT:
-          Result := State + 1;
+          Result := AState + 1;
         DECREMENT:
-          Result := State - 1;
-        else
-          Result := State;
+          Result := AState - 1;
+      else
+        Result := AState;
       end;
     end;
 
-  FStore := TStore<Integer, TEnumAction>.Create(FReducer, 0);
-  FStore.subscribe( procedure (State: Integer)
+  FStore := TStore<Integer, TEnumAction>.New(LReducer, 0);
+
+  FStore.Subscribe(
+    procedure(const AState: Integer)
     begin
-      LabelCounter.Caption := IntToStr(State);
-    end
-  );
+      LabelCounter.Caption := IntToStr(AState);
+    end);
+
   FStore.dispatch(INIT);
 end;
 
