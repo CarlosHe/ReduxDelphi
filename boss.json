@@ -1,0 +1,9 @@
+{
+	"name": "ReduxDelphi",
+	"description": "Redux for Delphi",
+	"version": "1.0.0",
+	"homepage": "github.com/pierrejean-coudert/ReduxDelphi",
+	"mainsrc": "./src",
+	"projects": [],
+	"dependencies": {}
+}

@@ -3,38 +3,37 @@ unit TodoStates;
 interface
 
 uses
-   System.Generics.Collections,
-   Immutable;
+  System.Generics.Collections,
+  Redux.Contract.Immutable,
+  Redux.Immutable;
 
 type
   TTodosFilter = (All, InProgress, Completed);
 
   ITodo = interface
     function Text: string;
-    function IsCompleted : Boolean;
+    function IsCompleted: Boolean;
     function Id: TGUID;
   end;
 
   ITodoList = IImmutableList<ITodo>;
 
   IApplicationState = interface
-    function ItemLeftCount : Integer;
+    function ItemLeftCount: Integer;
     function Todos: ITodoList;
-    function Filter : TTodosFilter;
+    function Filter: TTodosFilter;
   end;
 
   TTodo = class(TInterfacedObject, ITodo)
   private
     FText: string;
-    FIsCompleted : Boolean;
+    FIsCompleted: Boolean;
     FId: TGUID;
-
   public
     constructor Create(ATodo: ITodo); overload;
-    constructor Create(AText: string; AIsCompleted : Boolean; AId: TGUID); overload;
-
+    constructor Create(AText: string; AIsCompleted: Boolean; AId: TGUID); overload;
     function Text: string;
-    function IsCompleted : Boolean;
+    function IsCompleted: Boolean;
     function Id: TGUID;
   end;
 
@@ -46,11 +45,10 @@ type
     FFilter: TTodosFilter;
   public
     constructor Create; overload;
-    constructor Create(ATodos: ITodoList; AFilter: TTodosFilter); overload;
-
+    constructor Create(const ATodos: ITodoList; const AFilter: TTodosFilter); overload;
     function Todos: ITodoList;
-    function Filter : TTodosFilter;
-    function ItemLeftCount : Integer;
+    function Filter: TTodosFilter;
+    function ItemLeftCount: Integer;
   end;
 
 implementation
@@ -59,16 +57,16 @@ implementation
 
 constructor TTodo.Create(ATodo: ITodo);
 begin
-  FText:= ATodo.Text;
-  FIsCompleted:= ATodo.IsCompleted;
-  FId:= ATodo.Id;
+  FText := ATodo.Text;
+  FIsCompleted := ATodo.IsCompleted;
+  FId := ATodo.Id;
 end;
 
 constructor TTodo.Create(AText: string; AIsCompleted: Boolean; AId: TGUID);
 begin
-  FText:= AText;
-  FIsCompleted:= AIsCompleted;
-  FId:= AId;
+  FText := AText;
+  FIsCompleted := AIsCompleted;
+  FId := AId;
 end;
 
 function TTodo.Id: TGUID;
@@ -90,13 +88,13 @@ end;
 
 constructor TApplicationState.Create;
 begin
-  FTodos :=  TTodoList.Create;
+  FTodos := TTodoList.New;
   FFilter := All;
 end;
 
-constructor TApplicationState.Create(ATodos: ITodoList; AFilter: TTodosFilter);
+constructor TApplicationState.Create(const ATodos: ITodoList; const AFilter: TTodosFilter);
 begin
-  FTodos := TTodoList.Create(ATodos);
+  FTodos := TTodoList.New(ATodos);
   FFilter := AFilter;
 end;
 
@@ -115,7 +113,8 @@ var
   ATodo: ITodo;
 begin
   Result := 0;
-  for ATodo in FTodos do begin
+  for ATodo in FTodos do
+  begin
     if not ATodo.IsCompleted then
       Inc(Result);
   end;

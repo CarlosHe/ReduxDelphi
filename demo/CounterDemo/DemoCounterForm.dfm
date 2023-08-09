@@ -10,9 +10,7 @@ object FormDemoCounter: TFormDemoCounter
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   OnShow = FormShow
-  PixelsPerInch = 96
   TextHeight = 13
   object LabelCounter: TLabel
     Left = 64

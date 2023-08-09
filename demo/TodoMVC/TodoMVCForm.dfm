@@ -10,10 +10,8 @@ object FormTodo: TFormTodo
   Font.Height = -11
   Font.Name = 'Tahoma'
   Font.Style = []
-  OldCreateOrder = False
   OnCreate = FormCreate
   OnDestroy = FormDestroy
-  PixelsPerInch = 96
   TextHeight = 13
   object PanelHeaner: TPanel
     Left = 0
@@ -64,7 +62,6 @@ object FormTodo: TFormTodo
       Top = 6
       Width = 345
       Height = 219
-      OnClickCheck = CheckListBoxTodoClickCheck
       ItemHeight = 13
       Items.Strings = (
         'asasaa'
@@ -72,6 +69,7 @@ object FormTodo: TFormTodo
         'assadasas')
       PopupMenu = PopupMenuDelete
       TabOrder = 0
+      OnClickCheck = CheckListBoxTodoClickCheck
     end
   end
   object PanelFooter: TPanel

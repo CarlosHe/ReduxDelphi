@@ -3,14 +3,25 @@ unit TodoMVCForm;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls,
+  Winapi.Windows,
+  Winapi.Messages,
+  System.SysUtils,
+  System.Variants,
+  System.Classes,
+  Vcl.Graphics,
+  Vcl.Controls,
+  Vcl.Forms,
+  Vcl.Dialogs,
+  Vcl.ExtCtrls,
   System.Generics.Collections,
-  Redux,
-  StdAction,
+  Redux.Contract.Store,
+  Redux.Contract.Action,
   TodoStates,
   TodoActions,
-  TodoReducer, Vcl.StdCtrls, Vcl.CheckLst, Vcl.Menus;
+  TodoReducer,
+  Vcl.StdCtrls,
+  Vcl.CheckLst,
+  Vcl.Menus;
 
 type
 
@@ -43,8 +54,8 @@ type
     procedure MenuItemDeleteClick(Sender: TObject);
 
   private
-    FGUIDList : TList<TGUID>;
-    FStore : IStore<IApplicationState, IAction>;
+    FGUIDList: TList<TGUID>;
+    FStore: IStore<IApplicationState, IAction>;
 
     procedure UpdateGUI(State: IApplicationState);
 
@@ -55,32 +66,36 @@ var
 
 implementation
 
+uses
+  Redux.Store,
+  Redux.Action,
+  Redux.Middleware.Logger;
+
 {$R *.dfm}
 
-uses
-  Logger;
 
 procedure TFormTodo.CheckBoxAllClick(Sender: TObject);
 begin
-  FStore.Dispatch(TCompleteAllTodosAction.Create(CheckBoxAll.Checked));
+  FStore.Dispatch(TCompleteAllTodosAction.New(CheckBoxAll.Checked));
 end;
 
 procedure TFormTodo.CheckListBoxTodoClickCheck(Sender: TObject);
 var
-  index : Integer;
-  id : TGUID;
+  index: Integer;
+  id: TGUID;
 begin
   index := CheckListBoxTodo.ItemIndex;
   id := FGUIDList[index];
-  FStore.Dispatch(TCompleteTodoAction.Create(id));
+  FStore.Dispatch(TCompleteTodoAction.New(id));
 end;
 
 procedure TFormTodo.EditTodoKeyPress(Sender: TObject; var Key: Char);
 begin
-   if Key = #13 then begin
-     FStore.Dispatch(TAddTodoAction.Create(EditTodo.Text));
-     EditTodo.Text := '';
-   end;
+  if Key = #13 then
+  begin
+    FStore.Dispatch(TAddTodoAction.New(EditTodo.Text));
+    EditTodo.Text := '';
+  end;
 end;
 
 procedure TFormTodo.LabelClearCompletedClick(Sender: TObject);
@@ -90,28 +105,29 @@ end;
 
 procedure TFormTodo.LabelFilterActiveClick(Sender: TObject);
 begin
-  FStore.Dispatch(TFilterTodosAction.Create(InProgress));
+  FStore.Dispatch(TFilterTodosAction.New(InProgress));
 end;
 
 procedure TFormTodo.LabelFilterAllClick(Sender: TObject);
 begin
-  FStore.Dispatch(TFilterTodosAction.Create(All));
+  FStore.Dispatch(TFilterTodosAction.New(All));
 end;
 
 procedure TFormTodo.LabelFilterCompletedClick(Sender: TObject);
 begin
-  FStore.Dispatch(TFilterTodosAction.Create(Completed));
+  FStore.Dispatch(TFilterTodosAction.New(Completed));
 end;
 
 procedure TFormTodo.MenuItemDeleteClick(Sender: TObject);
 var
   I: Integer;
-  id : TGUID;
+  id: TGUID;
 begin
-  for I := 0 to CheckListBoxTodo.Count-1 do
-    if  CheckListBoxTodo.Selected[I] then begin
+  for I := 0 to CheckListBoxTodo.Count - 1 do
+    if CheckListBoxTodo.Selected[I] then
+    begin
       id := FGUIDList[I];
-      FStore.Dispatch(TDeleteTodoAction.Create(id));
+      FStore.Dispatch(TDeleteTodoAction.New(id));
       Break;
     end;
 end;
@@ -119,51 +135,55 @@ end;
 procedure TFormTodo.UpdateGUI(State: IApplicationState);
 var
   todo: ITodo;
-  index : Integer;
+  index: Integer;
 begin
   // updtae list
   CheckListBoxTodo.Items.BeginUpdate;
   try
     CheckListBoxTodo.Items.Clear;
     FGUIDList.Clear;
-    for todo in State.Todos do begin
-      if (State.Filter= All)
-          or ((State.Filter= InProgress) and (not todo.IsCompleted))
-          or  ((State.Filter= Completed) and ( todo.IsCompleted)) then
+    for todo in State.Todos do
+    begin
+      if (State.Filter = All)
+        or ((State.Filter = InProgress) and (not todo.IsCompleted))
+        or ((State.Filter = Completed) and (todo.IsCompleted)) then
       begin
         index := CheckListBoxTodo.Items.Add(todo.Text);
-        FGUIDList.Add(todo.Id);
+        FGUIDList.Add(todo.id);
         CheckListBoxTodo.Checked[index] := todo.IsCompleted;
       end;
     end;
   finally
     CheckListBoxTodo.Items.EndUpdate;
   end;
-  LabelLeft.Caption := format('%d item(s) left',[State.ItemLeftCount]);
+  LabelLeft.Caption := format('%d item(s) left', [State.ItemLeftCount]);
 
   // update filter
   LabelFilterAll.Font.Style := [];
   LabelFilterActive.Font.Style := [];
   LabelFilterCompleted.Font.Style := [];
   case State.Filter of
-    All: LabelFilterAll.Font.Style := [fsBold];
-    InProgress: LabelFilterActive.Font.Style := [fsBold];
-    Completed: LabelFilterCompleted.Font.Style := [fsBold];
+    All:
+      LabelFilterAll.Font.Style := [fsBold];
+    InProgress:
+      LabelFilterActive.Font.Style := [fsBold];
+    Completed:
+      LabelFilterCompleted.Font.Style := [fsBold];
   end;
 
 end;
 
-
 procedure TFormTodo.FormCreate(Sender: TObject);
 begin
-  FGUIDList:= TList<TGUID>.Create;
+  FGUIDList := TList<TGUID>.Create;
 
-  FStore := TStore<IApplicationState, IAction>.Create(ApplicationReducer, TApplicationState.Create());
+  FStore := TStore<IApplicationState, IAction>.New(ApplicationReducer, TApplicationState.Create());
   FStore.AddMiddleware(LoggerMiddleware);
-	FStore.subscribe( procedure (State: IApplicationState)
-                    begin
-                      UpdateGUI(State);
-                    end);
+  FStore.Subscribe(
+    procedure(const AState: IApplicationState)
+    begin
+      UpdateGUI(AState);
+    end);
   FStore.Dispatch(TActionInit.Create());
 end;
 
